@@ -11,6 +11,10 @@ public class PracticeDbContext : DbContext
     {
         
     }
+
+    public PracticeDbContext()
+    {
+    }
     public DbSet<Lesson> Lessons { get; set; }
     public DbSet<Teacher> Teachers { get; set; }
     public DbSet<Classroom> Classrooms { get; set; }
@@ -71,5 +75,18 @@ public class PracticeDbContext : DbContext
             .HasOne(gs => gs.Subject)
             .WithMany(s => s.GroupSubjects)
             .HasForeignKey(gs => gs.SubjectID);
+
+        modelBuilder.Entity<Classroom>()
+            .HasIndex(c => c.NumberClassroom)
+            .IsUnique();
+        modelBuilder.Entity<Subject>()
+            .HasIndex(c => c.NameSubjects)
+            .IsUnique();
+        modelBuilder.Entity<Teacher>()
+            .HasIndex(c => c.FIO)
+            .IsUnique();
+        modelBuilder.Entity<Group>()
+            .HasIndex(c => c.NameGroup)
+            .IsUnique();
     }
 }

@@ -4,9 +4,8 @@ public class Lesson
 {
     public int ID { get; set; }
     public TimeOnly DateStart { get; set; }
-    public TimeOnly DateEnd { get; set; }
     public int DayOfWeek { get; set; }
-    public int NumberOfWeer { get; set; }
+    public int NumberOfWeek { get; set; }
     public int TeacherID { get; set; }
     public int ClassroomID { get; set; }
     public int SubjectID { get; set; }
