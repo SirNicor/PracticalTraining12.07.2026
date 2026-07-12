@@ -7,3 +7,13 @@
 3) реализовать базу данных и функции ввода, редактирования, удаления и поиска  (CRUD); 
 4) реализовать проверку накладок (аудитория/преподаватель) и просмотр по группе  и протестировать на 15–20 записях. 
 На защите показать: как выявляются конфликты в расписании. 
+
+версия .Net необходимая - 10.0
+
+Запуск
+1) изменить в appsettings стрчоку подключения к базе данных postgresSql, пример по умолчанию - 
+"DefaultConnection": "Host=localhost;Port=5432;Database=practicedb;Username=postgres;Password=admin" 
+для PostgresSql localhost с 5432 портом, с UserName = postgres, password = admin - значения по умолчанию
+2) dotnet build из WebApplication1(можно пропустить, если IDE современное)
+3) dotnet run из WebApplication1(или запуск в любой IDE при настроенной конфигурации
+4) Для просмотра фронтенд части - https://localhost:7048/ или http://localhost:5274/
