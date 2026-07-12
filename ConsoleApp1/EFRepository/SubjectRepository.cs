@@ -43,6 +43,11 @@ public class SubjectRepository : ISubjectRepository
     {
         try
         {
+            var trackedEntity = _context.Subjects.Local.FirstOrDefault(s => s.ID == subject.ID);
+            if (trackedEntity != null)
+            {
+                _context.Entry(trackedEntity).State = EntityState.Detached;
+            }
             _context.Subjects.Update(subject);
             await _context.SaveChangesAsync();
         }

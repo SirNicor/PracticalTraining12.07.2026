@@ -1,0 +1,232 @@
+﻿@page "/classrooms"
+@using DomainCore
+@using EFRepository
+@using WebApplication1.Components
+@inject IClassroomRepository Repository
+@namespace WebApplication1.Pages
+
+<h3>Управление аудиториями</h3>
+<div style="margin-bottom: 20px;">
+    <a href="/" style="display: inline-flex; align-items: center; text-decoration: none; color: #0066cc; font-size: 0.95rem; font-weight: 500;">
+        <span style="margin-right: 6px;">←</span> На главную страницу
+    </a>
+</div>
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="error">@errorMessage</div>
+}
+
+<div style="border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+    <h4>@(isEditing ? $"Редактирование аудитории (ID: {currentClassroom.ID})" : "Добавить новую аудиторию")</h4>
+    
+    <div class="form-group">
+        <label for="classroomNumber">Номер аудитории:</label>
+        <input id="classroomNumber" type="text" @bind="currentClassroom.NumberClassroom" placeholder="Например, 301а..." />
+    </div>
+
+    <button @onclick="ProcessSave">@buttonText</button>
+    
+    @if (isEditing)
+    {
+        <button class="btn-secondary" @onclick="CancelEdit">Отмена</button>
+    }
+</div>
+
+<hr />
+
+<h4>Список аудиторий</h4>
+@if (classrooms == null)
+{
+    <p><em>Загрузка данных...</em></p>
+}
+else if (!classrooms.Any())
+{
+    <p>Аудитории пока не добавлены.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Номер аудитории</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var c in classrooms)
+            {
+                <tr @key="c.ID">
+                    <td>@c.ID</td>
+                    <td>@c.NumberClassroom</td>
+                    <td class="actions">
+                        <button @onclick="() => StartEdit(c)">Редактировать</button>
+                        <button class="btn-danger" @onclick="() => RequestDelete(c)">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<ConfirmDialog IsOpen="showDeleteConfirmation"
+               Title="Удаление аудитории"
+               Message="@($"Вы действительно хотите удалить аудиторию \"{classroomToDelete?.NumberClassroom}\"?")"
+               OnConfirm="ConfirmDelete"
+               OnCancel="CancelDelete" />
+
+<ConfirmDialog IsOpen="showEditConfirmation"
+               Title="Сохранение изменений"
+               Message="Вы действительно хотите сохранить изменения в этой аудитории?"
+               OnConfirm="ConfirmSaveEdit"
+               OnCancel="CancelEditDialog" />
+
+<ErrorDialog IsOpen="showErrorDialog"
+             Title="Произошла ошибка"
+             Message="@dialogErrorMessage"
+             OnClose="CloseErrorDialog" />
+
+@code {
+    private List<Classroom> classrooms = new();
+    private Classroom currentClassroom = new(); 
+    private string errorMessage = string.Empty;
+    private bool isEditing = false;
+    private string buttonText => isEditing ? "Сохранить изменения" : "Добавить";
+    
+    private bool showDeleteConfirmation = false;
+    private Classroom? classroomToDelete;
+    private bool showEditConfirmation = false;
+
+    private bool showErrorDialog = false;
+    private string dialogErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadClassrooms();
+    }
+
+    private async Task LoadClassrooms()
+    {
+        errorMessage = string.Empty;
+        var result = await Repository.GetAllClassroomsAsync();
+        classrooms = result ?? new List<Classroom>();
+    }
+
+    private async Task ProcessSave()
+    {
+        if (string.IsNullOrWhiteSpace(currentClassroom.NumberClassroom))
+        {
+            ShowError("Номер аудитории обязателен для заполнения.");
+            return;
+        }
+
+        if (isEditing)
+        {
+            showEditConfirmation = true;
+        }
+        else
+        {
+            await ExecuteCreate();
+        }
+    }
+
+    private async Task ExecuteCreate()
+    {
+        var newId = await Repository.CreateAsync(currentClassroom);
+        if (newId == null)
+        {
+            ShowError($"Аудитория '{currentClassroom.NumberClassroom}' уже существует или произошла ошибка при добавлении.");
+            return;
+        }
+        CancelEdit();
+        await LoadClassrooms();
+    }
+
+    private async Task ConfirmSaveEdit()
+    {
+        showEditConfirmation = false;
+
+        var result = await Repository.UpdateAsync(currentClassroom);
+        if (result == null)
+        {
+            ShowError("Не удалось обновить аудиторию. Возможно, она была удалена или такой номер уже занят.");
+            return;
+        }
+
+        CancelEdit();
+        await LoadClassrooms();
+    }
+
+    private void CancelEditDialog()
+    {
+        showEditConfirmation = false;
+    }
+
+    private void StartEdit(Classroom classroom)
+    {
+        currentClassroom = new Classroom 
+        { 
+            ID = classroom.ID, 
+            NumberClassroom = classroom.NumberClassroom 
+        };
+        isEditing = true;
+        errorMessage = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        currentClassroom = new Classroom();
+        isEditing = false;
+        errorMessage = string.Empty;
+        showEditConfirmation = false;
+    }
+
+    private void RequestDelete(Classroom classroom)
+    {
+        classroomToDelete = classroom;
+        showDeleteConfirmation = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmation = false;
+        classroomToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (classroomToDelete == null) return;
+
+        var id = classroomToDelete.ID;
+        showDeleteConfirmation = false; 
+
+        var result = await Repository.DeleteAsync(id);
+        if (result == null)
+        {
+            ShowError("Не удалось удалить аудиторию. Возможно, она уже была удалена из базы данных.");
+            classroomToDelete = null;
+            return;
+        }
+        
+        if (isEditing && currentClassroom.ID == id)
+        {
+            CancelEdit();
+        }
+
+        classroomToDelete = null;
+        await LoadClassrooms();
+    }
+
+    private void ShowError(string message)
+    {
+        dialogErrorMessage = message;
+        errorMessage = message;
+        showErrorDialog = true;
+    }
+
+    private void CloseErrorDialog()
+    {
+        showErrorDialog = false;
+        dialogErrorMessage = string.Empty;
+    }
+}

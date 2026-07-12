@@ -42,6 +42,11 @@ public class ClassroomRepository : IClassroomRepository
     {
         try
         {
+            var trackedEntity = _context.Classrooms.Local.FirstOrDefault(s => s.ID == classroom.ID);
+            if (trackedEntity != null)
+            {
+                _context.Entry(trackedEntity).State = EntityState.Detached;
+            }
             _context.Classrooms.Update(classroom);
             await _context.SaveChangesAsync();
         }

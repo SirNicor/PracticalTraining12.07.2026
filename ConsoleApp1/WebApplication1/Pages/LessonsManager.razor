@@ -1,0 +1,472 @@
+﻿@page "/lessons"
+@using DomainCore
+@using DomainCore.DTO
+@using EFRepository
+@using WebApplication1.Components
+@inject ILessonRepository LessonRepository
+@inject ITeacherRepository TeacherRepository
+@inject IGroupRepository GroupRepository
+@inject IClassroomRepository ClassroomRepository
+@inject ISubjectRepository SubjectRepository
+@namespace WebApplication1.Pages
+
+<h3>Управление расписанием занятий</h3>
+<div style="margin-bottom: 20px;">
+    <a href="/" style="display: inline-flex; align-items: center; text-decoration: none; color: #0066cc; font-size: 0.95rem; font-weight: 500;">
+        <span style="margin-right: 6px;">←</span> На главную страницу
+    </a>
+</div>
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="error">@errorMessage</div>
+}
+
+<div style="border: 1px solid #ccc; padding: 15px; border-radius: 4px;">
+    <h4>@(isEditing ? $"Редактирование занятия (ID: {currentLesson.ID})" : "Добавить новое занятие")</h4>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+        <div class="form-group">
+            <label for="dateStart">Время начала:</label>
+            <input id="dateStart" type="time" @bind="lessonTime" style="width: 100%; padding: 6px; box-sizing: border-box;" />
+        </div>
+
+        <div class="form-group">
+            <label for="dayOfWeek">День недели:</label>
+            <select id="dayOfWeek" @bind="currentLesson.DayOfWeek" style="width: 100%; padding: 6px; box-sizing: border-box;">
+                <option value="1">Понедельник</option>
+                <option value="2">Вторник</option>
+                <option value="3">Среда</option>
+                <option value="4">Четверг</option>
+                <option value="5">Пятница</option>
+                <option value="6">Суббота</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="numberOfWeek">Номер недели:</label>
+            <input id="numberOfWeek" type="number" min="1" max="4" @bind="currentLesson.NumberOfWeek" style="width: 100%; padding: 6px; box-sizing: border-box;" />
+        </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
+        <div class="form-group">
+            <label for="subjectSelect">Предмет:</label>
+            <select id="subjectSelect" @bind="currentLesson.SubjectName" style="width: 100%; padding: 6px; box-sizing: border-box;">
+                <option value="">-- Выберите предмет --</option>
+                @foreach (var sub in availableSubjects)
+                {
+                    <option value="@sub.NameSubjects">@sub.NameSubjects</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="teacherSelect">Преподаватель:</label>
+            <select id="teacherSelect" @bind="currentLesson.TeacherName" style="width: 100%; padding: 6px; box-sizing: border-box;">
+                <option value="">-- Выберите преподавателя --</option>
+                @foreach (var t in availableTeachers)
+                {
+                    <option value="@t.FIO">@t.FIO</option>
+                }
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="classroomSelect">Аудитория:</label>
+            <select id="classroomSelect" @bind="currentLesson.ClassroomNumber" style="width: 100%; padding: 6px; box-sizing: border-box;">
+                <option value="">-- Выберите аудиторию --</option>
+                @foreach (var c in availableClassrooms)
+                {
+                    <option value="@c.NumberClassroom">@c.NumberClassroom</option>
+                }
+            </select>
+        </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 15px;">
+        <label>Группы на занятии:</label>
+        @if (!availableGroups.Any())
+        {
+            <p style="color: #666; font-style: italic;">Сначала добавьте учебные группы.</p>
+        }
+        else
+        {
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 120px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+                @foreach (var group in availableGroups)
+                {
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
+                        <input type="checkbox" 
+                               checked="@selectedGroupNames.Contains(group.NameGroup)" 
+                               @onchange="(e) => ToggleGroupSelection(group.NameGroup, e.Value)" />
+                        @group.NameGroup
+                    </label>
+                }
+            </div>
+        }
+    </div>
+
+    <button @onclick="ProcessSave">@buttonText</button>
+    
+    @if (isEditing)
+    {
+        <button class="btn-secondary" @onclick="CancelEdit">Отмена</button>
+    }
+</div>
+
+<hr />
+
+<h4>Текущее расписание занятий</h4>
+@if (lessonsList == null)
+{
+    <p><em>Загрузка расписания...</em></p>
+}
+else if (!lessonsList.Any())
+{
+    <p>Занятия в расписании отсутствуют.</p>
+}
+else
+{
+    <table>
+        <thead>
+            <tr>
+                <th>Неделя</th>
+                <th>День</th>
+                <th>Время</th>
+                <th>Предмет</th>
+                <th>Преподаватель</th>
+                <th>Аудитория</th>
+                <th>Группы</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var l in lessonsList)
+            {
+                <tr @key="l.ID">
+                    <td>@l.NumberOfWeek</td>
+                    <td>@GetDayName(l.DayOfWeek)</td>
+                    <td>@l.DateStart.ToString("HH:mm")</td>
+                    <td>@l.SubjectName</td>
+                    <td>@l.TeacherName</td>
+                    <td><strong>@l.ClassroomNumber</strong></td>
+                    <td>
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px;">
+                            @foreach (var g in l.GroupNames)
+                            {
+                                <span style="background: #eef2f7; border: 1px solid #d0d7de; padding: 1px 6px; border-radius: 4px; font-size: 0.8rem;">@g</span>
+                            }
+                        </div>
+                    </td>
+                    <td class="actions">
+                        <button @onclick="() => StartEdit(l)">Редактировать</button>
+                        <button class="btn-danger" @onclick="() => RequestDelete(l)">Удалить</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<ConfirmDialog IsOpen="showDeleteConfirmation"
+               Title="Удаление занятия"
+               Message="Вы действительно хотите удалить это занятие из расписания?"
+               OnConfirm="ConfirmDelete"
+               OnCancel="CancelDelete" />
+
+<ConfirmDialog IsOpen="showEditConfirmation"
+               Title="Сохранение изменений"
+               Message="Вы действительно хотите перезаписать параметры этого занятия?"
+               OnConfirm="ConfirmSaveEdit"
+               OnCancel="CancelEditDialog" />
+
+<ErrorDialog IsOpen="showErrorDialog"
+             Title="Конфликт расписания"
+             Message="@dialogErrorMessage"
+             OnClose="CloseErrorDialog" />
+
+@code {
+    private List<LessonDTOCreate> lessonsList = new();
+    private List<TeacherDto> availableTeachers = new();
+    private List<GroupDto> availableGroups = new();
+    private List<Classroom> availableClassrooms = new();
+    private List<Subject> availableSubjects = new();
+    private List<string> selectedGroupNames = new();
+
+    private LessonDTOCreate currentLesson = new() 
+    { 
+        DayOfWeek = 1, 
+        NumberOfWeek = 1, 
+        GroupNames = new List<string>(),
+        TeacherName = "",
+        ClassroomNumber = "",
+        SubjectName = ""
+    };
+    
+    private DateTime? lessonTime = DateTime.Today.AddHours(8).AddMinutes(30);
+    private string errorMessage = string.Empty;
+    private bool isEditing = false;
+    private string buttonText => isEditing ? "Сохранить изменения" : "Добавить в расписание";
+    
+    private bool showDeleteConfirmation = false;
+    private LessonDTOCreate? lessonToDelete;
+    private bool showEditConfirmation = false;
+
+    private bool showErrorDialog = false;
+    private string dialogErrorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadRelatedData();
+        await LoadFullSchedule();
+    }
+
+    private async Task LoadRelatedData()
+    {
+        var teachers = await TeacherRepository.GetAllTeachersAsync();
+        availableTeachers = teachers ?? new List<TeacherDto>();
+
+        var groups = await GroupRepository.GetAllGroupsAsync();
+        availableGroups = groups ?? new List<GroupDto>();
+
+        var classrooms = await ClassroomRepository.GetAllClassroomsAsync();
+        availableClassrooms = classrooms ?? new List<Classroom>();
+
+        var subjects = await SubjectRepository.GetAllSubjectsAsync();
+        availableSubjects = subjects?.ToList() ?? new List<Subject>();
+    }
+
+    private async Task LoadFullSchedule()
+    {
+        errorMessage = string.Empty;
+        lessonsList.Clear();
+        
+        foreach(var group in availableGroups)
+        {
+            var infoList = await LessonRepository.GetLessonInfoForNameGroupAsync(group.NameGroup);
+            if (infoList != null)
+            {
+                foreach(var info in infoList)
+                {
+                    var detailed = await GetDetailedLessonInfoHackAsync(info);
+                    if (detailed != null && !lessonsList.Any(x => x.ID == detailed.ID))
+                    {
+                        lessonsList.Add(detailed);
+                    }
+                }
+            }
+        }
+        lessonsList = lessonsList.OrderBy(x => x.NumberOfWeek).ThenBy(x => x.DayOfWeek).ThenBy(x => x.DateStart).ToList();
+    }
+
+    private async Task<LessonDTOCreate?> GetDetailedLessonInfoHackAsync(LessonDTOInfo info)
+    {
+        var allTeachers = await TeacherRepository.GetAllTeachersAsync() ?? new();
+        foreach(var t in allTeachers)
+        {
+            var tLessons = await LessonRepository.GetLessonInfoForNameTeacherAsync(t.FIO);
+            if(tLessons != null && tLessons.Any(l => l.DateStart == info.DateStart && l.DayOfWeek == info.DayOfWeek && l.NumberOfWeek == info.NumberOfWeek))
+            {
+                foreach(var room in availableClassrooms)
+                {
+                    var rLessons = await LessonRepository.GetLessonInfoForNumberClassroomAsync(room.NumberClassroom);
+                    if(rLessons != null && rLessons.Any(l => l.DateStart == info.DateStart && l.DayOfWeek == info.DayOfWeek && l.NumberOfWeek == info.NumberOfWeek))
+                    {
+                        var matchingGroups = new List<string>();
+                        foreach(var g in availableGroups)
+                        {
+                            var gLessons = await LessonRepository.GetLessonInfoForNameGroupAsync(g.NameGroup);
+                            if(gLessons != null && gLessons.Any(l => l.DateStart == info.DateStart && l.DayOfWeek == info.DayOfWeek && l.NumberOfWeek == info.NumberOfWeek))
+                            {
+                                matchingGroups.Add(g.NameGroup);
+                            }
+                        }
+
+                        string structuralSubject = t.SubjectsName.FirstOrDefault(sName => availableGroups.Any(g => g.SubjectsName.Contains(sName))) ?? "Предмет";
+
+                        return new LessonDTOCreate
+                        {
+                            ID = info.GetHashCode(), 
+                            DateStart = info.DateStart,
+                            DayOfWeek = info.DayOfWeek,
+                            NumberOfWeek = info.NumberOfWeek,
+                            TeacherName = t.FIO,
+                            ClassroomNumber = room.NumberClassroom,
+                            SubjectName = structuralSubject,
+                            GroupNames = matchingGroups
+                        };
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    private void ToggleGroupSelection(string groupName, object? checkedValue)
+    {
+        bool isChecked = checkedValue is bool b && b;
+        if (isChecked)
+        {
+            if (!selectedGroupNames.Contains(groupName)) selectedGroupNames.Add(groupName);
+        }
+        else
+        {
+            selectedGroupNames.Remove(groupName);
+        }
+    }
+
+    private async Task ProcessSave()
+    {
+        if (string.IsNullOrWhiteSpace(currentLesson.SubjectName) || 
+            string.IsNullOrWhiteSpace(currentLesson.TeacherName) || 
+            string.IsNullOrWhiteSpace(currentLesson.ClassroomNumber))
+        {
+            ShowError("Заполните базовые поля: Предмет, Преподаватель и Аудитория.");
+            return;
+        }
+
+        if (!selectedGroupNames.Any())
+        {
+            ShowError("Необходимо выбрать как минимум одну группу для занятия.");
+            return;
+        }
+
+        if (lessonTime.HasValue)
+        {
+            currentLesson.DateStart = TimeOnly.FromDateTime(lessonTime.Value);
+        }
+
+        currentLesson.GroupNames = selectedGroupNames.ToList();
+
+        if (isEditing)
+        {
+            showEditConfirmation = true;
+        }
+        else
+        {
+            await ExecuteCreate();
+        }
+    }
+
+    private async Task ExecuteCreate()
+    {
+        var newId = await LessonRepository.CreateLessonAsync(currentLesson);
+        if (newId == null)
+        {
+            ShowError("Конфликт наложения расписания! Либо преподаватель/аудитория/группа уже заняты в это время, либо у участников отсутствует данный предмет в профиле.");
+            return;
+        }
+        CancelEdit();
+        await LoadFullSchedule();
+    }
+
+    private async Task ConfirmSaveEdit()
+    {
+        showEditConfirmation = false;
+
+        var result = await LessonRepository.UpdateLessonAsync(currentLesson);
+        if (result == null)
+        {
+            ShowError("Не удалось обновить занятие. Время пересекается с другими занятиями участников, или удалены базовые связи.");
+            return;
+        }
+
+        CancelEdit();
+        await LoadFullSchedule();
+    }
+
+    private void CancelEditDialog()
+    {
+        showEditConfirmation = false;
+    }
+
+    private void StartEdit(LessonDTOCreate dto)
+    {
+        currentLesson = new LessonDTOCreate 
+        { 
+            ID = dto.ID,
+            DateStart = dto.DateStart,
+            DayOfWeek = dto.DayOfWeek,
+            NumberOfWeek = dto.NumberOfWeek,
+            TeacherName = dto.TeacherName,
+            ClassroomNumber = dto.ClassroomNumber,
+            SubjectName = dto.SubjectName
+        };
+
+        lessonTime = DateTime.Today.Add(dto.DateStart.ToTimeSpan());
+        selectedGroupNames = dto.GroupNames != null ? dto.GroupNames.ToList() : new List<string>();
+            
+        isEditing = true;
+        errorMessage = string.Empty;
+    }
+
+    private void CancelEdit()
+    {
+        currentLesson = new LessonDTOCreate 
+        { 
+            DayOfWeek = 1, 
+            NumberOfWeek = 1, 
+            GroupNames = new List<string>(),
+            TeacherName = "", ClassroomNumber = "", SubjectName = "" 
+        };
+        selectedGroupNames.Clear();
+        lessonTime = DateTime.Today.AddHours(8).AddMinutes(30);
+        isEditing = false;
+        errorMessage = string.Empty;
+        showEditConfirmation = false;
+    }
+
+    private void RequestDelete(LessonDTOCreate dto)
+    {
+        lessonToDelete = dto;
+        showDeleteConfirmation = true;
+    }
+
+    private void CancelDelete()
+    {
+        showDeleteConfirmation = false;
+        lessonToDelete = null;
+    }
+
+    private async Task ConfirmDelete()
+    {
+        if (lessonToDelete == null) return;
+
+        showDeleteConfirmation = false; 
+
+        var result = await LessonRepository.DeleteLessonAsync(lessonToDelete.ID);
+        if (result == null)
+        {
+            ShowError("Не удалось удалить занятие. Возможно, оно уже было стерто.");
+            lessonToDelete = null;
+            return;
+        }
+
+        lessonToDelete = null;
+        await LoadFullSchedule();
+        CancelEdit();
+    }
+
+    private string GetDayName(int dayNum) => dayNum switch
+    {
+        1 => "Понедельник",
+        2 => "Вторник",
+        3 => "Среда",
+        4 => "Четверг",
+        5 => "Пятница",
+        6 => "Суббота",
+        _ => "Неизвестно"
+    };
+
+    private void ShowError(string message)
+    {
+        dialogErrorMessage = message;
+        errorMessage = message;
+        showErrorDialog = true;
+    }
+
+    private void CloseErrorDialog()
+    {
+        showErrorDialog = false;
+        dialogErrorMessage = string.Empty;
+    }
+}

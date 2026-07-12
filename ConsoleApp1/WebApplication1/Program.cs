@@ -8,16 +8,20 @@ try
     var builder = WebApplication.CreateBuilder(args);
     builder.Services.AddInfrastructureServices(builder.Configuration);
     var app = builder.Build();      
+    app.UseStaticFiles();
+    app.UseRouting();
     using (var scope = app.Services.CreateScope())
     {
         var dbContext = scope.ServiceProvider.GetRequiredService<PracticeDbContext>();
         dbContext.Database.Migrate(); 
     }
+    app.MapBlazorHub();
     app.AddedApiTeacher();
     app.AddedApiSubject();
     app.AddedApiLesson();
     app.AddedApiClassroom();
     app.AddedApiGroup();    
+    app.MapFallbackToPage("/_Host");
     app.Run();
 }
 catch (Exception ex)

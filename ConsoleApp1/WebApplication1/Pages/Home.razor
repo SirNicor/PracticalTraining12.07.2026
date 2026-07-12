@@ -1,0 +1,46 @@
+﻿@page "/"
+@namespace WebApplication1.Pages
+
+<div style="max-width: 900px; margin: 50px auto; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; padding: 0 20px;">
+    <div style="margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid #eaeaea;">
+        <h2 style="color: #111111; font-size: 1.8rem; font-weight: 600; margin: 0 0 8px 0; letter-spacing: -0.5px;">Система управления расписанием</h2>
+        <p style="color: #666666; font-size: 1rem; margin: 0;">Панель администратора образовательного учреждения</p>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px;">
+        <a href="/lessons" style="text-decoration: none; color: inherit;">
+            <div style="border: 1px solid #e1e4e6; border-radius: 6px; padding: 20px; background: #ffffff; height: 100%; box-sizing: border-box; transition: background-color 0.15s ease;">
+                <h4 style="margin: 0 0 8px 0; color: #0066cc; font-size: 1.1rem; font-weight: 500;">Расписание занятий</h4>
+                <p style="margin: 0; color: #555555; font-size: 0.9rem; line-height: 1.5;">Мониторинг сетки уроков, распределение групп по времени и контроль накладок.</p>
+            </div>
+        </a>
+
+        <a href="/teachers" style="text-decoration: none; color: inherit;">
+            <div style="border: 1px solid #e1e4e6; border-radius: 6px; padding: 20px; background: #ffffff; height: 100%; box-sizing: border-box; transition: background-color 0.15s ease;">
+                <h4 style="margin: 0 0 8px 0; color: #0066cc; font-size: 1.1rem; font-weight: 500;">Преподаватели</h4>
+                <p style="margin: 0; color: #555555; font-size: 0.9rem; line-height: 1.5;">Учет преподавательского состава и закрепление доступных учебных дисциплин.</p>
+            </div>
+        </a>
+
+        <a href="/groups" style="text-decoration: none; color: inherit;">
+            <div style="border: 1px solid #e1e4e6; border-radius: 6px; padding: 20px; background: #ffffff; height: 100%; box-sizing: border-box; transition: background-color 0.15s ease;">
+                <h4 style="margin: 0 0 8px 0; color: #0066cc; font-size: 1.1rem; font-weight: 500;">Учебные группы</h4>
+                <p style="margin: 0; color: #555555; font-size: 0.9rem; line-height: 1.5;">Управление академическими группами и формирование их планов обучения.</p>
+            </div>
+        </a>
+
+        <a href="/subjects" style="text-decoration: none; color: inherit;">
+            <div style="border: 1px solid #e1e4e6; border-radius: 6px; padding: 20px; background: #ffffff; height: 100%; box-sizing: border-box; transition: background-color 0.15s ease;">
+                <h4 style="margin: 0 0 8px 0; color: #0066cc; font-size: 1.1rem; font-weight: 500;">Предметы</h4>
+                <p style="margin: 0; color: #555555; font-size: 0.9rem; line-height: 1.5;">Редактирование глобального перечня академических дисциплин.</p>
+            </div>
+        </a>
+
+        <a href="/classrooms" style="text-decoration: none; color: inherit;">
+            <div style="border: 1px solid #e1e4e6; border-radius: 6px; padding: 20px; background: #ffffff; height: 100%; box-sizing: border-box; transition: background-color 0.15s ease;">
+                <h4 style="margin: 0 0 8px 0; color: #0066cc; font-size: 1.1rem; font-weight: 500;">Аудиторный фонд</h4>
+                <p style="margin: 0; color: #555555; font-size: 0.9rem; line-height: 1.5;">Учет и администрирование учебных кабинетов и лекционных залов.</p>
+            </div>
+        </a>
+    </div>
+</div>

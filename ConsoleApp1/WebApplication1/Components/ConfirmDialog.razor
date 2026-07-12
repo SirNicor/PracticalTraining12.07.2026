@@ -1,0 +1,27 @@
+﻿@if (IsOpen)
+{
+    <div class="modal-backdrop" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; bg-color: rgba(0,0,0,0.5); z-index: 1040; background: rgba(0,0,0,0.4);"></div>
+    <div class="modal" tabindex="-1" style="display: block; z-index: 1050; position: fixed; top: 20%; left: 50%; transform: translate(-50%, 0); max-width: 500px; width: 100%;" role="dialog">
+        <div class="modal-content" style="background: white; border: 1px solid #999; border-radius: 6px; box-shadow: 0 3px 9px rgba(0,0,0,0.5); padding: 20px;">
+            <div class="modal-header" style="padding-bottom: 10px; border-bottom: 1px solid #e5e5e5; display: flex; justify-content: space-between; align-items: center;">
+                <h5 class="modal-title" style="margin: 0; font-size: 1.25rem;">@Title</h5>
+                <button type="button" class="close" @onclick="OnCancel" style="background: transparent; border: 0; font-size: 1.5rem; cursor: pointer;">&times;</button>
+            </div>
+            <div class="modal-body" style="padding: 20px 0;">
+                <p style="margin: 0;">@Message</p>
+            </div>
+            <div class="modal-footer" style="padding-top: 10px; border-top: 1px solid #e5e5e5; text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                <button type="button" class="btn btn-secondary" @onclick="OnCancel">Отмена</button>
+                <button type="button" class="btn btn-primary" @onclick="OnConfirm">Подтвердить</button>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter] public bool IsOpen { get; set; }
+    [Parameter] public string Title { get; set; } = "Подтверждение";
+    [Parameter] public string Message { get; set; } = "Вы уверены?";
+    [Parameter] public EventCallback OnConfirm { get; set; }
+    [Parameter] public EventCallback OnCancel { get; set; }
+}
