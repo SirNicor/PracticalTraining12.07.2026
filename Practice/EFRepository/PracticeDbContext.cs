@@ -39,34 +39,41 @@ public class PracticeDbContext : DbContext
         modelBuilder.Entity<Lesson>()
             .HasOne(l => l.Teacher)
             .WithMany(t => t.Lessons)
-            .HasForeignKey(l => l.TeacherID);
+            .HasForeignKey(l => l.TeacherID)
+            .OnDelete(DeleteBehavior.Cascade);;
         modelBuilder.Entity<Lesson>()
             .HasOne(l => l.Classroom)
             .WithMany(c => c.Lessons)
-            .HasForeignKey(l => l.ClassroomID);
+            .HasForeignKey(l => l.ClassroomID)
+            .OnDelete(DeleteBehavior.Cascade);;
         modelBuilder.Entity<Lesson>()
             .HasOne(l => l.Subject)
             .WithMany(s => s.Lessons)
-            .HasForeignKey(l => l.SubjectID);
+            .HasForeignKey(l => l.SubjectID)
+            .OnDelete(DeleteBehavior.Cascade);;
         modelBuilder.Entity<TeacherSubject>()
             .HasOne(ts => ts.Teacher)
             .WithMany(t => t.TeacherSubjects)
-            .HasForeignKey(ts => ts.TeacherID);
+            .HasForeignKey(ts => ts.TeacherID)
+            .OnDelete(DeleteBehavior.Cascade);;
         
         modelBuilder.Entity<TeacherSubject>()
             .HasOne(ts => ts.Subject)
             .WithMany(s => s.TeacherSubjects)
-            .HasForeignKey(ts => ts.SubjectID);
+            .HasForeignKey(ts => ts.SubjectID)
+            .OnDelete(DeleteBehavior.Cascade);;
         
         modelBuilder.Entity<GroupSubject>()
             .HasOne(gs => gs.Group)
             .WithMany(g => g.GroupSubjects)
-            .HasForeignKey(gs => gs.GroupID);
+            .HasForeignKey(gs => gs.GroupID)
+            .OnDelete(DeleteBehavior.Cascade);;
         
         modelBuilder.Entity<GroupSubject>()
             .HasOne(gs => gs.Subject)
             .WithMany(s => s.GroupSubjects)
-            .HasForeignKey(gs => gs.SubjectID);
+            .HasForeignKey(gs => gs.SubjectID)
+            .OnDelete(DeleteBehavior.Cascade);;
 
         modelBuilder.Entity<Classroom>()
             .HasIndex(c => c.NumberClassroom)
@@ -80,5 +87,17 @@ public class PracticeDbContext : DbContext
         modelBuilder.Entity<Group>()
             .HasIndex(c => c.NameGroup)
             .IsUnique();
+        
+        modelBuilder.Entity<LessonGroup>()
+            .HasOne(lg => lg.Lesson)
+            .WithMany(l => l.LessonGroups)
+            .HasForeignKey(lg => lg.LessonID)
+            .OnDelete(DeleteBehavior.Cascade); 
+
+        modelBuilder.Entity<LessonGroup>()
+            .HasOne(lg => lg.Group)
+            .WithMany(g => g.LessonGroups)
+            .HasForeignKey(lg => lg.GroupID)
+            .OnDelete(DeleteBehavior.Cascade); 
     }
 }

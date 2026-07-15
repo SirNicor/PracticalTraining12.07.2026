@@ -238,67 +238,7 @@ else
     private async Task LoadFullSchedule()
     {
         errorMessage = string.Empty;
-        lessonsList.Clear();
-        
-        foreach(var group in availableGroups)
-        {
-            var infoList = await LessonRepository.GetLessonInfoForNameGroupAsync(group.NameGroup);
-            if (infoList != null)
-            {
-                foreach(var info in infoList)
-                {
-                    var detailed = await GetDetailedLessonInfoHackAsync(info);
-                    if (detailed != null && !lessonsList.Any(x => x.ID == detailed.ID))
-                    {
-                        lessonsList.Add(detailed);
-                    }
-                }
-            }
-        }
-        lessonsList = lessonsList.OrderBy(x => x.NumberOfWeek).ThenBy(x => x.DayOfWeek).ThenBy(x => x.DateStart).ToList();
-    }
-
-    private async Task<LessonDTOCreate?> GetDetailedLessonInfoHackAsync(LessonDTOInfo info)
-    {
-        var allTeachers = await TeacherRepository.GetAllTeachersAsync() ?? new();
-        foreach(var t in allTeachers)
-        {
-            var tLessons = await LessonRepository.GetLessonInfoForNameTeacherAsync(t.FIO);
-            if(tLessons != null && tLessons.Any(l => l.DateStart == info.DateStart && l.DayOfWeek == info.DayOfWeek && l.NumberOfWeek == info.NumberOfWeek))
-            {
-                foreach(var room in availableClassrooms)
-                {
-                    var rLessons = await LessonRepository.GetLessonInfoForNumberClassroomAsync(room.NumberClassroom);
-                    if(rLessons != null && rLessons.Any(l => l.DateStart == info.DateStart && l.DayOfWeek == info.DayOfWeek && l.NumberOfWeek == info.NumberOfWeek))
-                    {
-                        var matchingGroups = new List<string>();
-                        foreach(var g in availableGroups)
-                        {
-                            var gLessons = await LessonRepository.GetLessonInfoForNameGroupAsync(g.NameGroup);
-                            if(gLessons != null && gLessons.Any(l => l.DateStart == info.DateStart && l.DayOfWeek == info.DayOfWeek && l.NumberOfWeek == info.NumberOfWeek))
-                            {
-                                matchingGroups.Add(g.NameGroup);
-                            }
-                        }
-
-                        string structuralSubject = t.SubjectsName.FirstOrDefault(sName => availableGroups.Any(g => g.SubjectsName.Contains(sName))) ?? "Предмет";
-
-                        return new LessonDTOCreate
-                        {
-                            ID = info.GetHashCode(), 
-                            DateStart = info.DateStart,
-                            DayOfWeek = info.DayOfWeek,
-                            NumberOfWeek = info.NumberOfWeek,
-                            TeacherName = t.FIO,
-                            ClassroomNumber = room.NumberClassroom,
-                            SubjectName = structuralSubject,
-                            GroupNames = matchingGroups
-                        };
-                    }
-                }
-            }
-        }
-        return null;
+        lessonsList = await LessonRepository.GetAllLessonsFullAsync();
     }
 
     private void ToggleGroupSelection(string groupName, object? checkedValue)

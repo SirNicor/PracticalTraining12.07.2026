@@ -12,12 +12,40 @@ public class LessonRepository : ILessonRepository
     {
         _dbFactory = dbFactory;
     }
+    public async Task<List<LessonDTOCreate>> GetAllLessonsFullAsync()
+    {
+        await using var context = _dbFactory.CreateDbContext();
+    
+        var lessons = await context.Lessons
+            .Include(l => l.Teacher)
+            .Include(l => l.Classroom)
+            .Include(l => l.Subject)
+            .Include(l => l.LessonGroups)
+            .ThenInclude(lg => lg.Group)
+            .OrderBy(l => l.NumberOfWeek)
+            .ThenBy(l => l.DayOfWeek)
+            .ThenBy(l => l.DateStart)
+            .ToListAsync();
+    
+        return lessons.Select(l => new LessonDTOCreate
+        {
+            ID = l.ID,
+            DateStart = l.DateStart,
+            DayOfWeek = l.DayOfWeek,
+            NumberOfWeek = l.NumberOfWeek,
+            TeacherName = l.Teacher.FIO,
+            ClassroomNumber = l.Classroom.NumberClassroom,
+            SubjectName = l.Subject.NameSubjects,
+            GroupNames = l.LessonGroups.Select(lg => lg.Group.NameGroup).ToList()
+        }).ToList();
+    }
     
     public async Task<LessonDTOInfo?> GetLessonInfoForIDAsync(int ID)
     {
         await using var context = _dbFactory.CreateDbContext();
         return await context.Lessons.Where(l => l.ID == ID).Select(l => new LessonDTOInfo()
         {
+            ID = l.ID, 
             DateStart = l.DateStart,
             DayOfWeek = l.DayOfWeek,
             NumberOfWeek = l.NumberOfWeek,
@@ -29,6 +57,7 @@ public class LessonRepository : ILessonRepository
         await using var context = _dbFactory.CreateDbContext();
         return await context.Lessons.Where(l => l.LessonGroups.Any(lg => lg.Group.NameGroup == name)).Select(l => new LessonDTOInfo()
         {
+            ID = l.ID, 
             DateStart = l.DateStart,
             DayOfWeek = l.DayOfWeek,
             NumberOfWeek = l.NumberOfWeek,
@@ -40,6 +69,7 @@ public class LessonRepository : ILessonRepository
         await using var context = _dbFactory.CreateDbContext();
         return await context.Lessons.Where(l => l.Teacher.FIO == name).Select(l => new LessonDTOInfo()
         {
+            ID = l.ID, 
             DateStart = l.DateStart,
             DayOfWeek = l.DayOfWeek,
             NumberOfWeek = l.NumberOfWeek,
@@ -51,6 +81,7 @@ public class LessonRepository : ILessonRepository
         await using var context = _dbFactory.CreateDbContext();
         return await context.Lessons.Where(l => l.Classroom.NumberClassroom == name).Select(l => new LessonDTOInfo()
         {
+            ID = l.ID, 
             DateStart = l.DateStart,
             DayOfWeek = l.DayOfWeek,
             NumberOfWeek = l.NumberOfWeek,
@@ -180,14 +211,12 @@ public class LessonRepository : ILessonRepository
     public async Task<int?> DeleteLessonAsync(int ID)
     {
         await using var context = _dbFactory.CreateDbContext();
+    
         var lesson = await context.Lessons
-            .Include(l => l.LessonGroups)
             .FirstOrDefaultAsync(l => l.ID == ID);
-        if (lesson == null)
-        {
-            return null;
-        }
-        context.LessonGroups.RemoveRange(lesson.LessonGroups);
+    
+        if (lesson == null) return null;
+    
         context.Lessons.Remove(lesson);
         await context.SaveChangesAsync();
         return ID;

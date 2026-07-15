@@ -4,6 +4,7 @@ namespace EFRepository;
 
 public interface ILessonRepository
 {
+    public Task<List<LessonDTOCreate>> GetAllLessonsFullAsync();
     public Task<LessonDTOInfo?> GetLessonInfoForIDAsync(int ID);
     public Task<List<LessonDTOInfo>?> GetLessonInfoForNameGroupAsync(string name);
     public Task<List<LessonDTOInfo>?> GetLessonInfoForNameTeacherAsync(string name);
