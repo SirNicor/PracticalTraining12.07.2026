@@ -12,21 +12,70 @@ public class LessonRepository : ILessonRepository
     {
         _dbFactory = dbFactory;
     }
+    
+    public async Task<LessonDTOInfo?> GetLessonInfoForIDAsync(int ID)
+    {
+        await using var context = _dbFactory.CreateDbContext();
+        return await context.Lessons.Where(l => l.ID == ID).Select(l => new LessonDTOInfo()
+        {
+            ID = l.ID,
+            DateStart = l.DateStart,
+            DayOfWeek = l.DayOfWeek,
+            NumberOfWeek = l.NumberOfWeek,
+        }).FirstOrDefaultAsync();
+    }
+
+    public async Task<List<LessonDTOInfo>?> GetLessonInfoForNameGroupAsync(string name)
+    {
+        await using var context = _dbFactory.CreateDbContext();
+        return await context.Lessons.Where(l => l.LessonGroups.Any(lg => lg.Group.NameGroup == name)).Select(l => new LessonDTOInfo()
+        {
+            ID = l.ID,
+            DateStart = l.DateStart,
+            DayOfWeek = l.DayOfWeek,
+            NumberOfWeek = l.NumberOfWeek,
+        }).ToListAsync();
+    }
+
+    public async Task<List<LessonDTOInfo>?> GetLessonInfoForNameTeacherAsync(string name)
+    {
+        await using var context = _dbFactory.CreateDbContext();
+        return await context.Lessons.Where(l => l.Teacher.FIO == name).Select(l => new LessonDTOInfo()
+        {
+            ID = l.ID,
+            DateStart = l.DateStart,
+            DayOfWeek = l.DayOfWeek,
+            NumberOfWeek = l.NumberOfWeek,
+        }).ToListAsync();
+    }
+
+    public async Task<List<LessonDTOInfo>> GetLessonInfoForNumberClassroomAsync(string name)
+    {
+        await using var context = _dbFactory.CreateDbContext();
+        return await context.Lessons.Where(l => l.Classroom.NumberClassroom == name).Select(l => new LessonDTOInfo()
+        {
+            ID = l.ID,
+            DateStart = l.DateStart,
+            DayOfWeek = l.DayOfWeek,
+            NumberOfWeek = l.NumberOfWeek,
+        }).ToListAsync();
+    }
+
     public async Task<List<LessonDTOCreate>> GetAllLessonsFullAsync()
     {
         await using var context = _dbFactory.CreateDbContext();
-    
+        
         var lessons = await context.Lessons
             .Include(l => l.Teacher)
             .Include(l => l.Classroom)
             .Include(l => l.Subject)
             .Include(l => l.LessonGroups)
-            .ThenInclude(lg => lg.Group)
+                .ThenInclude(lg => lg.Group)
             .OrderBy(l => l.NumberOfWeek)
             .ThenBy(l => l.DayOfWeek)
             .ThenBy(l => l.DateStart)
             .ToListAsync();
-    
+        
         return lessons.Select(l => new LessonDTOCreate
         {
             ID = l.ID,
@@ -39,58 +88,10 @@ public class LessonRepository : ILessonRepository
             GroupNames = l.LessonGroups.Select(lg => lg.Group.NameGroup).ToList()
         }).ToList();
     }
-    
-    public async Task<LessonDTOInfo?> GetLessonInfoForIDAsync(int ID)
+
+    public async Task<int?> CreateLessonAsync(LessonDTOCreate dto) 
     {
         await using var context = _dbFactory.CreateDbContext();
-        return await context.Lessons.Where(l => l.ID == ID).Select(l => new LessonDTOInfo()
-        {
-            ID = l.ID, 
-            DateStart = l.DateStart,
-            DayOfWeek = l.DayOfWeek,
-            NumberOfWeek = l.NumberOfWeek,
-        }).FirstOrDefaultAsync();
-    }
-
-    public async Task<List<LessonDTOInfo>?> GetLessonInfoForNameGroupAsync(string name)
-    {
-        await using var context = _dbFactory.CreateDbContext();
-        return await context.Lessons.Where(l => l.LessonGroups.Any(lg => lg.Group.NameGroup == name)).Select(l => new LessonDTOInfo()
-        {
-            ID = l.ID, 
-            DateStart = l.DateStart,
-            DayOfWeek = l.DayOfWeek,
-            NumberOfWeek = l.NumberOfWeek,
-        }).ToListAsync();
-    }
-
-    public async Task<List<LessonDTOInfo>?> GetLessonInfoForNameTeacherAsync(string name)
-    {
-        await using var context = _dbFactory.CreateDbContext();
-        return await context.Lessons.Where(l => l.Teacher.FIO == name).Select(l => new LessonDTOInfo()
-        {
-            ID = l.ID, 
-            DateStart = l.DateStart,
-            DayOfWeek = l.DayOfWeek,
-            NumberOfWeek = l.NumberOfWeek,
-        }).ToListAsync();
-    }
-
-    public async Task<List<LessonDTOInfo>> GetLessonInfoForNumberClassroomAsync(string name)
-    {
-        await using var context = _dbFactory.CreateDbContext();
-        return await context.Lessons.Where(l => l.Classroom.NumberClassroom == name).Select(l => new LessonDTOInfo()
-        {
-            ID = l.ID, 
-            DateStart = l.DateStart,
-            DayOfWeek = l.DayOfWeek,
-            NumberOfWeek = l.NumberOfWeek,
-        }).ToListAsync();
-    }
-
-        public async Task<int?> CreateLessonAsync(LessonDTOCreate dto) 
-        {
-            await using var context = _dbFactory.CreateDbContext();
         using var transaction = await context.Database.BeginTransactionAsync();
         try
         {

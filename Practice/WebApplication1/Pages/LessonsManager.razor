@@ -3,6 +3,7 @@
 @using DomainCore.DTO
 @using EFRepository
 @using WebApplication1.Components
+@using WebApplication1.Helpers
 @inject ILessonRepository LessonRepository
 @inject ITeacherRepository TeacherRepository
 @inject IGroupRepository GroupRepository
@@ -27,12 +28,19 @@
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
         <div class="form-group">
             <label for="dateStart">Время начала:</label>
-            <input id="dateStart" type="time" @bind="lessonTime" style="width: 100%; padding: 6px; box-sizing: border-box;" />
+            <input id="dateStart" type="time" @bind="lessonTime" 
+                   style="width: 100%; padding: 6px; box-sizing: border-box; @(timeError != null ? "border: 1px solid #d32f2f;" : "")" />
+            @if (timeError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@timeError</div>
+            }
         </div>
 
         <div class="form-group">
             <label for="dayOfWeek">День недели:</label>
-            <select id="dayOfWeek" @bind="currentLesson.DayOfWeek" style="width: 100%; padding: 6px; box-sizing: border-box;">
+            <select id="dayOfWeek" @bind="currentLesson.DayOfWeek" 
+                    style="width: 100%; padding: 6px; box-sizing: border-box; @(dayError != null ? "border: 1px solid #d32f2f;" : "")">
+                <option value="">-- Выберите день --</option>
                 <option value="1">Понедельник</option>
                 <option value="2">Вторник</option>
                 <option value="3">Среда</option>
@@ -40,46 +48,70 @@
                 <option value="5">Пятница</option>
                 <option value="6">Суббота</option>
             </select>
+            @if (dayError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@dayError</div>
+            }
         </div>
 
         <div class="form-group">
             <label for="numberOfWeek">Номер недели:</label>
-            <input id="numberOfWeek" type="number" min="1" max="4" @bind="currentLesson.NumberOfWeek" style="width: 100%; padding: 6px; box-sizing: border-box;" />
+            <input id="numberOfWeek" type="number" min="1" max="4" @bind="currentLesson.NumberOfWeek" 
+                   style="width: 100%; padding: 6px; box-sizing: border-box; @(weekError != null ? "border: 1px solid #d32f2f;" : "")" />
+            @if (weekError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@weekError</div>
+            }
         </div>
     </div>
 
     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 15px;">
         <div class="form-group">
             <label for="subjectSelect">Предмет:</label>
-            <select id="subjectSelect" @bind="currentLesson.SubjectName" style="width: 100%; padding: 6px; box-sizing: border-box;">
+            <select id="subjectSelect" @bind="currentLesson.SubjectName" 
+                    style="width: 100%; padding: 6px; box-sizing: border-box; @(subjectError != null ? "border: 1px solid #d32f2f;" : "")">
                 <option value="">-- Выберите предмет --</option>
                 @foreach (var sub in availableSubjects)
                 {
                     <option value="@sub.NameSubjects">@sub.NameSubjects</option>
                 }
             </select>
+            @if (subjectError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@subjectError</div>
+            }
         </div>
 
         <div class="form-group">
             <label for="teacherSelect">Преподаватель:</label>
-            <select id="teacherSelect" @bind="currentLesson.TeacherName" style="width: 100%; padding: 6px; box-sizing: border-box;">
+            <select id="teacherSelect" @bind="currentLesson.TeacherName" 
+                    style="width: 100%; padding: 6px; box-sizing: border-box; @(teacherError != null ? "border: 1px solid #d32f2f;" : "")">
                 <option value="">-- Выберите преподавателя --</option>
                 @foreach (var t in availableTeachers)
                 {
                     <option value="@t.FIO">@t.FIO</option>
                 }
             </select>
+            @if (teacherError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@teacherError</div>
+            }
         </div>
 
         <div class="form-group">
             <label for="classroomSelect">Аудитория:</label>
-            <select id="classroomSelect" @bind="currentLesson.ClassroomNumber" style="width: 100%; padding: 6px; box-sizing: border-box;">
+            <select id="classroomSelect" @bind="currentLesson.ClassroomNumber" 
+                    style="width: 100%; padding: 6px; box-sizing: border-box; @(classroomError != null ? "border: 1px solid #d32f2f;" : "")">
                 <option value="">-- Выберите аудиторию --</option>
                 @foreach (var c in availableClassrooms)
                 {
                     <option value="@c.NumberClassroom">@c.NumberClassroom</option>
                 }
             </select>
+            @if (classroomError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@classroomError</div>
+            }
         </div>
     </div>
 
@@ -91,7 +123,7 @@
         }
         else
         {
-            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 120px; overflow-y: auto; border: 1px solid #ddd; padding: 10px; border-radius: 4px; background: #fafafa;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; max-height: 120px; overflow-y: auto; border: 1px solid @(groupsError != null ? "#d32f2f" : "#ddd"); padding: 10px; border-radius: 4px; background: #fafafa;">
                 @foreach (var group in availableGroups)
                 {
                     <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: normal;">
@@ -102,6 +134,10 @@
                     </label>
                 }
             </div>
+            @if (groupsError != null)
+            {
+                <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@groupsError</div>
+            }
         }
     </div>
 
@@ -214,6 +250,14 @@ else
     private bool showErrorDialog = false;
     private string dialogErrorMessage = string.Empty;
 
+    private string? timeError;
+    private string? dayError;
+    private string? weekError;
+    private string? subjectError;
+    private string? teacherError;
+    private string? classroomError;
+    private string? groupsError;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadRelatedData();
@@ -252,21 +296,62 @@ else
         {
             selectedGroupNames.Remove(groupName);
         }
+        groupsError = null;
     }
 
-    private async Task ProcessSave()
+    private bool ValidateLessonForm()
     {
-        if (string.IsNullOrWhiteSpace(currentLesson.SubjectName) || 
-            string.IsNullOrWhiteSpace(currentLesson.TeacherName) || 
-            string.IsNullOrWhiteSpace(currentLesson.ClassroomNumber))
+        timeError = null;
+        dayError = null;
+        weekError = null;
+        subjectError = null;
+        teacherError = null;
+        classroomError = null;
+        groupsError = null;
+
+        bool isValid = true;
+
+        var (timeValid, timeErr) = Validators.ValidateLessonTime(lessonTime);
+        if (!timeValid) { timeError = timeErr; isValid = false; }
+
+        var (dayValid, dayErr) = Validators.ValidateDayOfWeek(currentLesson.DayOfWeek);
+        if (!dayValid) { dayError = dayErr; isValid = false; }
+
+        var (weekValid, weekErr) = Validators.ValidateNumberOfWeek(currentLesson.NumberOfWeek);
+        if (!weekValid) { weekError = weekErr; isValid = false; }
+
+        if (string.IsNullOrWhiteSpace(currentLesson.SubjectName))
         {
-            ShowError("Заполните базовые поля: Предмет, Преподаватель и Аудитория.");
-            return;
+            subjectError = "Необходимо выбрать предмет.";
+            isValid = false;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentLesson.TeacherName))
+        {
+            teacherError = "Необходимо выбрать преподавателя.";
+            isValid = false;
+        }
+
+        if (string.IsNullOrWhiteSpace(currentLesson.ClassroomNumber))
+        {
+            classroomError = "Необходимо выбрать аудиторию.";
+            isValid = false;
         }
 
         if (!selectedGroupNames.Any())
         {
-            ShowError("Необходимо выбрать как минимум одну группу для занятия.");
+            groupsError = "Необходимо выбрать как минимум одну группу.";
+            isValid = false;
+        }
+
+        return isValid;
+    }
+
+    private async Task ProcessSave()
+    {
+        if (!ValidateLessonForm())
+        {
+            ShowError("Пожалуйста, исправьте ошибки в форме перед сохранением.");
             return;
         }
 
@@ -337,6 +422,7 @@ else
             
         isEditing = true;
         errorMessage = string.Empty;
+        ClearValidationErrors();
     }
 
     private void CancelEdit()
@@ -353,6 +439,18 @@ else
         isEditing = false;
         errorMessage = string.Empty;
         showEditConfirmation = false;
+        ClearValidationErrors();
+    }
+
+    private void ClearValidationErrors()
+    {
+        timeError = null;
+        dayError = null;
+        weekError = null;
+        subjectError = null;
+        teacherError = null;
+        classroomError = null;
+        groupsError = null;
     }
 
     private void RequestDelete(LessonDTOCreate dto)

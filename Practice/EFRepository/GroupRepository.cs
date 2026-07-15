@@ -50,7 +50,7 @@ public class GroupRepository : IGroupRepository
             var subjects = await context.Subjects
                 .Where(s => groupDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
-            if (subjects.Count != groupDto.SubjectsName.Count)
+            if (subjects.Count != groupDto.SubjectsName.Count || subjects.Count == 0)
             {
                 return null;
             }
@@ -94,7 +94,7 @@ public class GroupRepository : IGroupRepository
             var subjects = await context.Subjects
                 .Where(s => groupDto.SubjectsName.Contains(s.NameSubjects))
                 .ToListAsync();
-            if (subjects.Count != groupDto.SubjectsName.Count)
+            if (subjects.Count != groupDto.SubjectsName.Count || subjects.Count == 0)
             {
                 return null;
             }

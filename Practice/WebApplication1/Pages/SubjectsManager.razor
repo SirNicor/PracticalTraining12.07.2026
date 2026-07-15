@@ -2,6 +2,7 @@
 @using DomainCore
 @using EFRepository
 @using WebApplication1.Components
+@using WebApplication1.Helpers
 @inject ISubjectRepository Repository
 @namespace WebApplication1.Pages
 
@@ -21,7 +22,13 @@
     
     <div class="form-group">
         <label for="subjectName">Название предмета:</label>
-        <input id="subjectName" type="text" @bind="currentSubject.NameSubjects" placeholder="Введите название..." />
+        <input id="subjectName" type="text" @bind="currentSubject.NameSubjects" 
+               placeholder="Введите название..." 
+               style="padding: 6px; box-sizing: border-box; @(subjectNameError != null ? "border: 1px solid #d32f2f;" : "")" />
+        @if (subjectNameError != null)
+        {
+            <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@subjectNameError</div>
+        }
     </div>
 
     <button @onclick="ProcessSave">@buttonText</button>
@@ -100,6 +107,8 @@ else
     private bool showErrorDialog = false;
     private string dialogErrorMessage = string.Empty;
 
+    private string? subjectNameError;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadSubjects();
@@ -114,9 +123,13 @@ else
 
     private async Task ProcessSave()
     {
-        if (string.IsNullOrWhiteSpace(currentSubject.NameSubjects))
+        subjectNameError = null;
+
+        var (isValid, error) = Validators.ValidateSubjectName(currentSubject.NameSubjects);
+        if (!isValid)
         {
-            ShowError("Название предмета обязательно для заполнения.");
+            subjectNameError = error;
+            ShowError("Пожалуйста, исправьте ошибки в форме.");
             return;
         }
 
@@ -171,6 +184,7 @@ else
         };
         isEditing = true;
         errorMessage = string.Empty;
+        subjectNameError = null;
     }
 
     private void CancelEdit()
@@ -179,6 +193,7 @@ else
         isEditing = false;
         errorMessage = string.Empty;
         showEditConfirmation = false;
+        subjectNameError = null;
     }
 
     private void RequestDelete(Subject subject)
@@ -229,4 +244,4 @@ else
         showErrorDialog = false;
         dialogErrorMessage = string.Empty;
     }
-}
+}   

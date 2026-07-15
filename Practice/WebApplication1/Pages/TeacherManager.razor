@@ -3,6 +3,7 @@
 @using DomainCore.DTO
 @using EFRepository
 @using WebApplication1.Components
+@using WebApplication1.Helpers
 @inject ITeacherRepository TeacherRepository
 @inject ISubjectRepository SubjectRepository
 @namespace WebApplication1.Pages
@@ -23,7 +24,16 @@
     
     <div class="form-group" style="margin-bottom: 15px;">
         <label for="teacherFio">ФИО преподавателя:</label>
-        <input id="teacherFio" type="text" @bind="currentTeacher.FIO" placeholder="Введите ФИО..." style="width: 100%; padding: 6px; box-sizing: border-box;" />
+        <input id="teacherFio" type="text" @bind="currentTeacher.FIO" 
+               placeholder="Например: Иванов Иван Иванович..." 
+               style="width: 100%; padding: 6px; box-sizing: border-box; @(fioError != null ? "border: 1px solid #d32f2f;" : "")" />
+        @if (fioError != null)
+        {
+            <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@fioError</div>
+        }
+        <div style="color: #666; font-size: 0.75rem; margin-top: 2px;">
+            Формат: Фамилия Имя [Отчество], каждое слово с заглавной буквы
+        </div>
     </div>
 
     <div class="form-group" style="margin-bottom: 15px;">
@@ -115,7 +125,7 @@ else
 
 <ConfirmDialog IsOpen="showDeleteConfirmation"
                Title="Удаление преподавателя"
-               Message="@($"Вы действительно хотите удалить преподавателя \"{teacherToDelete?.FIO}\"?")"
+               Message="@($"Вы действительно хотите удалить преподавателя \"{teacherToDelete?.FIO}\"?. Удаление преподаватели каскадно удалит связанные с ним пары")"
                OnConfirm="ConfirmDelete"
                OnCancel="CancelDelete" />
 
@@ -146,6 +156,8 @@ else
 
     private bool showErrorDialog = false;
     private string dialogErrorMessage = string.Empty;
+
+    private string? fioError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -184,9 +196,13 @@ else
 
     private async Task ProcessSave()
     {
-        if (string.IsNullOrWhiteSpace(currentTeacher.FIO))
+        fioError = null;
+
+        var (isValid, error) = Validators.ValidateTeacherFio(currentTeacher.FIO);
+        if (!isValid)
         {
-            ShowError("ФИО преподавателя обязательно для заполнения.");
+            fioError = error;
+            ShowError("Пожалуйста, исправьте ошибки в форме.");
             return;
         }
 
@@ -247,6 +263,7 @@ else
             
         isEditing = true;
         errorMessage = string.Empty;
+        fioError = null;
     }
 
     private void CancelEdit()
@@ -256,6 +273,7 @@ else
         isEditing = false;
         errorMessage = string.Empty;
         showEditConfirmation = false;
+        fioError = null;
     }
 
     private void RequestDelete(TeacherDto teacherDto)

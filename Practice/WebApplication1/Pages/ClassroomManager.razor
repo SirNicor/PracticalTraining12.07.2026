@@ -1,8 +1,8 @@
 ﻿@page "/classrooms"
 @using DomainCore
 @using EFRepository
-@using Microsoft.EntityFrameworkCore
 @using WebApplication1.Components
+@using WebApplication1.Helpers
 @inject IClassroomRepository Repository
 @namespace WebApplication1.Pages
 
@@ -22,7 +22,16 @@
     
     <div class="form-group">
         <label for="classroomNumber">Номер аудитории:</label>
-        <input id="classroomNumber" type="text" @bind="currentClassroom.NumberClassroom" placeholder="Например, 301а..." />
+        <input id="classroomNumber" type="text" @bind="currentClassroom.NumberClassroom" 
+               placeholder="Например, 301, 301а, 12-Б..." 
+               style="padding: 6px; box-sizing: border-box; @(classroomError != null ? "border: 1px solid #d32f2f;" : "")" />
+        @if (classroomError != null)
+        {
+            <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@classroomError</div>
+        }
+        <div style="color: #666; font-size: 0.75rem; margin-top: 2px;">
+            Формат: цифры + опциональная буква (301, 301а, 12-Б)
+        </div>
     </div>
 
     <button @onclick="ProcessSave">@buttonText</button>
@@ -72,7 +81,7 @@ else
 
 <ConfirmDialog IsOpen="showDeleteConfirmation"
                Title="Удаление аудитории"
-               Message="@($"Вы действительно хотите удалить аудиторию \"{classroomToDelete?.NumberClassroom}\"?")"
+               Message="@($"Вы действительно хотите удалить аудиторию \"{classroomToDelete?.NumberClassroom}\"? Удаление может повлечь каскадное удаление пар, которые проводятся в данной аудитории")"
                OnConfirm="ConfirmDelete"
                OnCancel="CancelDelete" />
 
@@ -101,6 +110,8 @@ else
     private bool showErrorDialog = false;
     private string dialogErrorMessage = string.Empty;
 
+    private string? classroomError;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadClassrooms();
@@ -115,9 +126,13 @@ else
 
     private async Task ProcessSave()
     {
-        if (string.IsNullOrWhiteSpace(currentClassroom.NumberClassroom))
+        classroomError = null;
+
+        var (isValid, error) = Validators.ValidateClassroomNumber(currentClassroom.NumberClassroom);
+        if (!isValid)
         {
-            ShowError("Номер аудитории обязателен для заполнения.");
+            classroomError = error;
+            ShowError("Пожалуйста, исправьте ошибки в форме.");
             return;
         }
 
@@ -172,6 +187,7 @@ else
         };
         isEditing = true;
         errorMessage = string.Empty;
+        classroomError = null;
     }
 
     private void CancelEdit()
@@ -180,6 +196,7 @@ else
         isEditing = false;
         errorMessage = string.Empty;
         showEditConfirmation = false;
+        classroomError = null;
     }
 
     private void RequestDelete(Classroom classroom)

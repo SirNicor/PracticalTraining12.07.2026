@@ -51,7 +51,7 @@
                     .Where(s => teacherDto.SubjectsName.Contains(s.NameSubjects))
                     .ToListAsync();
                 
-                if (subjects.Count != teacherDto.SubjectsName.Count)
+                if (subjects.Count != teacherDto.SubjectsName.Count || subjects.Count == 0)
                 {
                     return null;
                 }
@@ -95,7 +95,7 @@
                 var subjects = await context.Subjects
                     .Where(s => teacherDto.SubjectsName.Contains(s.NameSubjects))
                     .ToListAsync();
-                if (subjects.Count != teacherDto.SubjectsName.Count)
+                if (subjects.Count != teacherDto.SubjectsName.Count || subjects.Count == 0)
                 {
                     return null;
                 }

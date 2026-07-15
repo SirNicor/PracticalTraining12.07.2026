@@ -3,6 +3,7 @@
 @using DomainCore.DTO
 @using EFRepository
 @using WebApplication1.Components
+@using WebApplication1.Helpers
 @inject IGroupRepository GroupRepository
 @inject ISubjectRepository SubjectRepository
 @namespace WebApplication1.Pages
@@ -23,7 +24,16 @@
     
     <div class="form-group" style="margin-bottom: 15px;">
         <label for="groupName">Название группы:</label>
-        <input id="groupName" type="text" @bind="currentGroup.NameGroup" placeholder="Введите название группы..." style="width: 100%; padding: 6px; box-sizing: border-box;" />
+        <input id="groupName" type="text" @bind="currentGroup.NameGroup" 
+               placeholder="Например: ИС-21, БПИ-23..." 
+               style="width: 100%; padding: 6px; box-sizing: border-box; @(groupNameError != null ? "border: 1px solid #d32f2f;" : "")" />
+        @if (groupNameError != null)
+        {
+            <div style="color: #d32f2f; font-size: 0.8rem; margin-top: 4px;">@groupNameError</div>
+        }
+        <div style="color: #666; font-size: 0.75rem; margin-top: 2px;">
+            Длина 2-20 символов. Допустимы буквы, цифры, дефис, пробелы.
+        </div>
     </div>
 
     <div class="form-group" style="margin-bottom: 15px;">
@@ -115,7 +125,7 @@ else
 
 <ConfirmDialog IsOpen="showDeleteConfirmation"
                Title="Удаление группы"
-               Message="@($"Вы действительно хотите удалить группу \"{groupToDelete?.NameGroup}\"?")"
+               Message="@($"Вы действительно хотите удалить группу \"{groupToDelete?.NameGroup}\"? Удаление может повлечь каскадное удаление пар, в которых данная группа задействована")"
                OnConfirm="ConfirmDelete"
                OnCancel="CancelDelete" />
 
@@ -146,6 +156,8 @@ else
 
     private bool showErrorDialog = false;
     private string dialogErrorMessage = string.Empty;
+
+    private string? groupNameError;
 
     protected override async Task OnInitializedAsync()
     {
@@ -184,9 +196,13 @@ else
 
     private async Task ProcessSave()
     {
-        if (string.IsNullOrWhiteSpace(currentGroup.NameGroup))
+        groupNameError = null;
+
+        var (isValid, error) = Validators.ValidateGroupName(currentGroup.NameGroup);
+        if (!isValid)
         {
-            ShowError("Название группы обязательно для заполнения.");
+            groupNameError = error;
+            ShowError("Пожалуйста, исправьте ошибки в форме.");
             return;
         }
 
@@ -247,6 +263,7 @@ else
             
         isEditing = true;
         errorMessage = string.Empty;
+        groupNameError = null;
     }
 
     private void CancelEdit()
@@ -256,6 +273,7 @@ else
         isEditing = false;
         errorMessage = string.Empty;
         showEditConfirmation = false;
+        groupNameError = null;
     }
 
     private void RequestDelete(GroupDto groupDto)
