@@ -223,7 +223,7 @@ else
         var newId = await TeacherRepository.CreateAsync(currentTeacher);
         if (newId == null)
         {
-            ShowError($"Преподаватель '{currentTeacher.FIO}' уже существует или один из выбранных предметов стал недоступен.");
+            ShowError($"Преподаватель '{currentTeacher.FIO}' уже существует, один из выбранных предметов стал недоступен или вы не ввели ни одной дисциплины.");
             return;
         }
         CancelEdit();
